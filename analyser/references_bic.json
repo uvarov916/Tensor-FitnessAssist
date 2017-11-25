@@ -1,0 +1,83 @@
+{"references": [
+  {
+    "x": {
+      "is_const": true,
+      "values": [1000],
+      "min": -30000,
+      "max": 30000
+    },
+    "y": {
+      "is_const": true,
+      "values": [1000],
+      "min": -30000,
+      "max": 30000
+    },
+    "z": {
+      "is_const": true,
+      "values": [1000],
+      "min": -30000,
+      "max": 30000
+    }
+  },
+  {
+    "x": {
+      "is_const": true,
+      "values": [1000],
+      "min": -30000,
+      "max": 30000
+    },
+    "y": {
+      "is_const": true,
+      "values": [1000],
+      "min": -30000,
+      "max": 30000
+    },
+    "z": {
+      "is_const": true,
+      "values": [1000],
+      "min": -30000,
+      "max": 30000
+    }
+  },
+  {
+    "x": {
+      "is_const": false,
+      "values": [-16000, -10000, -5000, 0, 5000, 10000, 16000, 10000, 5000, 0, -5000, -10000, -16000],
+      "min": -30000,
+      "max": 30000
+    },
+    "y": {
+      "is_const": true,
+      "values": [1000],
+      "min": -30000,
+      "max": 30000
+    },
+    "z": {
+      "is_const": true,
+      "values": [1000],
+      "min": -30000,
+      "max": 30000
+    }
+  },
+  {
+    "x": {
+      "is_const": true,
+      "values": [1000],
+      "min": -30000,
+      "max": 30000
+    },
+    "y": {
+      "is_const": true,
+      "values": [1000],
+      "min": -30000,
+      "max": 30000
+    },
+    "z": {
+      "is_const": true,
+      "values": [1000],
+      "min": -30000,
+      "max": 30000
+    }
+  }
+]
+}
