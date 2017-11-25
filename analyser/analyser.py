@@ -2,6 +2,7 @@ import bitstring
 import json
 import serial
 
+
 class Analyser:
     # Consts
     ORIENTATIONS = ['x', 'y', 'z']
@@ -21,9 +22,9 @@ class Analyser:
 
         # Массивы с эталонами координат
         self.references = data['references']
-        print (data)
+        print(data)
 
-        reader = Reader('COM5')
+        reader = Reader('COM4')
 
     def data_listen(self):
         self.init_params()
@@ -117,16 +118,56 @@ class Analyser:
         del data['id']
         self.init_data[id] = data
         if self.is_init_state():
-                self.state = self.DOING_EXERCISE
+            self.state = self.DOING_EXERCISE
+
 
 class Reader:
     DATA_SIZE = 8
     MSG_BEGIN_SIZE = 8
     BEGIN_SYMBOL = 0xff
+    SMOOTH_INDEX = 10
+    HAVE_ENOUGH_DATA = {0: False, 1: False, 2: False, 3: False}
+    cache = [{'id': 0, 'x': [], 'y': [], 'z': []}, {'id': 1, 'x': [], 'y': [], 'z': []},
+             {'id': 2, 'x': [], 'y': [], 'z': []}, {'id': 3, 'x': [], 'y': [], 'z': []}]
 
     def __init__(self, com):
         self.com = com
         self.ser = serial.Serial(com)
+
+    def process_read(self):
+        while True:
+            cur_data = self.read()
+            self.update_cache(cur_data)
+            id = cur_data['id'] - 1
+            #print(id)  #          if self.HAVE_ENOUGH_DATA[id] == True:
+            x = int(sum(self.cache[id]['x']) / self.SMOOTH_INDEX)
+            y = int(sum(self.cache[id]['y']) / self.SMOOTH_INDEX)
+            z = int(sum(self.cache[id]['z']) / self.SMOOTH_INDEX)
+
+            rd = {'id': id, 'x': x, 'y': y, 'z': z}
+            #print(rd)
+            return rd
+
+    def update_cache(self, data):
+        id = data['id'] - 1
+        print(id)
+        lenx = len(self.cache[id]['x'])
+        if lenx == self.SMOOTH_INDEX:
+            self.cache[id]['x'] = self.cache[id]['x'][1:self.SMOOTH_INDEX]
+            self.HAVE_ENOUGH_DATA[id] = True
+        self.cache[id]['x'].append(data['x'])
+
+        leny = len(self.cache[id]['y'])
+        if leny == self.SMOOTH_INDEX:
+            self.cache[id]['y'] = self.cache[id]['y'][1:self.SMOOTH_INDEX]
+        self.cache[id]['y'].append(data['y'])
+
+        lenz = len(self.cache[id]['z'])
+        if lenz == self.SMOOTH_INDEX:
+            self.cache[id]['z'] = self.cache[id]['z'][1:self.SMOOTH_INDEX]
+        self.cache[id]['z'].append(data['z'])
+
+
 
     def read_f(self, ser):
         i = 0
@@ -146,7 +187,7 @@ class Reader:
             ch = ser.read()
             ch = ord(ch)
             num += chr(ch)
-            #print(ch, ' ')
+            # print(ch, ' ')
             i += 1
         return num
 
@@ -172,7 +213,7 @@ class Reader:
         x = ((num[1]) << 8) | (num[2])
         y = ((num[3]) << 8) | (num[4])
         z = ((num[5]) << 8) | (num[6])
-        hsh =num[7]
+        hsh = num[7]
 
         return id, x, y, z, hsh
 
@@ -194,7 +235,7 @@ class Reader:
             ch = ser.read()
             ch = ord(ch)
             num += chr(ch)
-            #print(ch, ' ')
+            # print(ch, ' ')
             i += 1
         return num
 
@@ -224,14 +265,6 @@ class Reader:
                         symbols = []
                         break
 
-
-
-
-
-
-
-
-
     def transform(self, num):
         # id = (num[0])
         id = bitstring.Bits(uint=num[0], length=16)
@@ -257,4 +290,9 @@ class Reader:
     def close(self):
         self.ser.close()
 
-# analyser = Analyser('references.json')
+
+
+#analyser = Analyser('references.json')
+rdr = Reader('COM4')
+while True:
+    print(rdr.process_read())
