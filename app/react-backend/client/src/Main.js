@@ -13,11 +13,11 @@ class Main extends Component {
                 exercises: [
                     {
                         exercise: 'bizeps',
-                        count: 15
+                        count: 2
                     },
                     {
                         exercise: 'pushup',
-                        count: 5
+                        count: 3
                     },
                     {
                         exercise: 'squat',
@@ -63,7 +63,9 @@ class Main extends Component {
         this.state = {
             trainings:trainings,
             pageTitle:"Выберите тренировку",
-            activeTraining:"",
+            activeTraining:{
+                name:""
+            },
             socketData:""
         };
         this.chooseTrainingHandler = this.chooseTrainingHandler.bind(this);
@@ -87,7 +89,7 @@ class Main extends Component {
     putStartHandler(e) {
         console.log('putStartHandler');
         this.props.selectTrainingHandler(this.state.activeTraining);
-    }
+}
 }
 function Trenirovka(props)
 {
@@ -101,13 +103,13 @@ function Trenirovka(props)
 
 
     var active = '';
-    if(props.activeTraining === props.training.name)
+    if(props.activeTraining.name === props.training.name)
     {
         active="active";
     }
 
     return (
-        <div className={'trenirovka ' + active} onClick={(e) => props.handler(e, props.training.name)}>
+        <div className={'trenirovka ' + active} onClick={(e) => props.handler(e, props.training)}>
 <h2>{props.training.name}</h2>
 <div>{listExercises}</div>
 </div>

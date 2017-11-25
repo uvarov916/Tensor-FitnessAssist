@@ -10,7 +10,9 @@ class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            currentTraining: ''
+            currentTraining: '',
+            dataActiveTraining: null
+
         };
         this.selectTrainingHandler = this.selectTrainingHandler.bind(this);
         this.finishTrainingHandler = this.finishTrainingHandler.bind(this);
@@ -18,8 +20,10 @@ class App extends Component {
 
     }
 
-    selectTrainingHandler() {
-     this.setState({currentTraining :'2'});
+    selectTrainingHandler(activeTraining) {
+        this.setState({currentTraining :'2'});
+     this.setState({dataActiveTraining :activeTraining});
+
     }
 
     processTrainingHandler(){
@@ -44,7 +48,7 @@ class App extends Component {
        else if(this.state.currentTraining === '2')
         {
             return(
-                <GetTraining socketData={this.state.socketData} processTrainingHandler={this.processTrainingHandler}/>
+                <GetTraining dataActiveTraining={this.state.dataActiveTraining} socketData={this.state.socketData} processTrainingHandler={this.processTrainingHandler}/>
             );
         }
 
