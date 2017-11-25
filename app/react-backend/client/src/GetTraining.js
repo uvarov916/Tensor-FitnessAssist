@@ -9,7 +9,8 @@ class GetTraining extends Component {
 		//this.putStartHandler = this.putStartHandler.bind(this);
 		console.log(props.socketData);
         this.state={
-			picture:"1"
+			picture:"1",
+			countOfTraining:0
         };
         this.getTrainingHandler = this.getTrainingHandler.bind(this);
 		console.log(this.state.picture);
@@ -17,8 +18,8 @@ class GetTraining extends Component {
     render(){
         return(
 			<div>
-				<h1>Тренировка идет</h1>
-				<p>{this.props.socketData.progress}</p>
+                <h1>Тренировка идет</h1>
+				<p>{this.state.countOfTraining}</p>
 				<p>{this.props.socketData.name}</p>
 				<DisplayPicture picture = {this.state.picture}/>
 				<OnFinishClick handler={this.getTrainingHandler}/>
@@ -29,9 +30,13 @@ class GetTraining extends Component {
     getTrainingHandler(e) {
         this.props.processTrainingHandler();
     }
-	componentWillReceiveProps(nextProps){
-		this.setState({picture: ""+nextProps.socketData.progress});
-	}
+    componentWillReceiveProps(nextProps){
+        this.setState({picture: ""+nextProps.socketData.progress});
+        if(nextProps.socketData.finalState===true)
+        {
+            this.setState({countOfTraining:this.state.countOfTraining+1});
+        }
+    }
 }
 
 function DisplayPicture(picture){
