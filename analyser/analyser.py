@@ -1,14 +1,20 @@
 import json
+import serial
+import codecs
 
 class Analyser:
-    orientations = ['x', 'y', 'z']
     # Consts
+    ORIENTATIONS = ['x', 'y', 'z']
+
     INCORRECT_DIRECTION = 1
     MAX_TRANSITION_LENGTH_EXCEEDED = 2
     MAX_INDEXES_DELTA_EXCEEDED = 3
 
     MAX_TRANSITION_LENGTH = 3
     MAX_INDEXES_DELTA = 5
+
+    WAITING_INIT_STATE = 1
+    DOING_EXERCISE = 2
 
     def __init__(self, file_name):
         data = json.load(open(file_name))
@@ -17,21 +23,23 @@ class Analyser:
         self.references = data['references']
         print (data)
 
+        reader = Reader('COM5')
+
     def data_listen(self):
-        self.init_indexes()
+        self.init_params()
 
         while True:
-            data = self.read()
-            self.step(data)
+            data = self.reader.read()
 
-
-    def read(self):
-        pass
+            if self.state == self.WAITING_INIT_STATE:
+                self.process_init_state(data)
+            elif self.state == self:
+                self.step(data)
 
     def step(self, data):
         id = data['id']
 
-        for orientation in self.orientations:
+        for orientation in self.ORIENTATIONS:
             self.change_index(id, orientation, data[orientation])
             if not self.check_indexes():
                 self.error(self.MAX_INDEXES_DELTA_EXCEEDED)
@@ -71,18 +79,22 @@ class Analyser:
             if val >= ref[ind - 1]:
                 self.error(self.INCORRECT_DIRECTION)
 
-    def init_indexes(self):
+    def init_params(self):
         # Указатели на текущий элемент в эталоне
         self.indexes = []
-        for i in range(len(self.orientations)):
+        for i in range(len(self.ORIENTATIONS)):
             index = {}
-            for orientation in self.orientation:
+            for orientation in self.ORIENTATIONS:
                 index[orientation] = 0
 
             self.indexes.append(index)
 
+        self.state = self.WAITING_INIT_STATE
+
+        self.init_data = {}
+
     def check_indexes(self):
-        min_ind = len(self.orientations[0]['x'])
+        min_ind = len(self.references[0][self.ORIENTATIONS[0]])
         max_ind = 0
 
         for obj in self.indexes:
@@ -93,7 +105,85 @@ class Analyser:
         return max_ind - min_ind < self.MAX_INDEXES_DELTA
 
     def error(self, err):
+        # TODO: Добавить обработку ошибок
+
+        self.init_params()
+
+    def is_init_state(self):
         pass
 
+    def process_init_state(self, data):
+        id = data['id']
+        del data['id']
+        self.init_data[id] = data
+        if self.is_init_state():
+                self.state = self.DOING_EXERCISE
 
-analyser = Analyser('references.json')
+class Reader:
+    DATA_SIZE = 8
+    MSG_BEGIN_SIZE = 8
+    BEGIN_SYMBOL = 0xff
+
+    def __init__(self, com):
+        self.com = com
+        self.ser = serial.Serial(com)
+
+    def read_f(self, ser):
+        i = 0
+        while i < 8:
+            ch = ser.read()
+            if ord(ch) == 0xFF:
+                i += 1
+                if i == 8:
+                    break
+            else:
+                i = 0
+
+    def read_num(self, ser):
+        i = 0
+        num = ''
+        while i < 8:
+            ch = ser.read()
+            ch = ord(ch)
+            num += chr(ch)
+            #print(ch, ' ')
+            i += 1
+        return num
+
+    def read_coords(self):
+        data = []
+        begin_symbols_count = 0
+
+        while len(data) < self.DATA_SIZE:
+            sym = ord(self.ser.read())
+
+            if begin_symbols_count < self.MSG_BEGIN_SIZE:
+                if sym == self.BEGIN_SYMBOL:
+                    begin_symbols_count += 1
+                else:
+                    begin_symbols_count = 0
+            else:
+                data.append(sym)
+
+        return data
+
+    def transform(self, num):
+        id = (num[0])
+        x = ((num[1]) << 8) | (num[2])
+        y = ((num[3]) << 8) | (num[4])
+        z = ((num[5]) << 8) | (num[6])
+        hsh =num[7]
+
+        return id, x, y, z, hsh
+
+    def read(self):
+        symbols = self.read_coords()
+        if len(symbols):
+            id, x, y, z, hsh = self.transform(symbols)
+
+        rd = {'id': id, 'x': x, 'y': y, 'z': z}
+
+        return rd
+
+
+# analyser = Analyser('references.json')
