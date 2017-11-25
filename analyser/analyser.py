@@ -10,6 +10,7 @@ class Analyser:
     INCORRECT_DIRECTION = 1
     MAX_TRANSITION_LENGTH_EXCEEDED = 2
     MAX_INDEXES_DELTA_EXCEEDED = 3
+    CONSTANT_LIMIT_EXCEEDED = 4
 
     MAX_TRANSITION_LENGTH = 3
     MAX_INDEXES_DELTA = 5
@@ -17,58 +18,70 @@ class Analyser:
     WAITING_INIT_STATE = 1
     DOING_EXERCISE = 2
 
-    def __init__(self, file_name):
+    def __init__(self, file_name, sensor_count):
         data = json.load(open(file_name))
 
         # Массивы с эталонами координат
         self.references = data['references']
-        print(data)
-
-        reader = Reader('COM4')
+        self.reader = Reader('COM12')
+        self.sensor_count = sensor_count
 
     def data_listen(self):
         self.init_params()
+        print ('Start')
 
         while True:
-            data = self.reader.read()
+            data = self.reader.process_read()
 
             if self.state == self.WAITING_INIT_STATE:
                 self.process_init_state(data)
-            elif self.state == self:
+            elif self.state == self.DOING_EXERCISE:
                 self.step(data)
 
     def step(self, data):
         id = data['id']
 
         for orientation in self.ORIENTATIONS:
+            item = self.references[id][orientation]
             self.change_index(id, orientation, data[orientation])
             if not self.check_indexes():
                 self.error(self.MAX_INDEXES_DELTA_EXCEEDED)
 
+            if item['is_const'] and not self.check_const(item['min'], item['max'], data[orientation]):
+                print ('const limit error', item['min'], item['max'], data[orientation])
+                self.error(self.CONSTANT_LIMIT_EXCEEDED)
+
+        print (self.indexes[2]['x'])
+
+        if data['id'] == 2:
+            print ('coord', data['x'])
+
     def change_index(self, id, orientation, val):
         ind = self.indexes[id][orientation]
-        ref = self.references[id][orientation]
+        ref = self.references[id][orientation]['values']
 
         # Если дошли до последнего элемента, прекращаем обработку
-        if ind == len(ref):
+        if ind >= len(ref) - 1:
+            if not self.references[id][orientation]['is_const']:
+                self.init_params()
             return
 
-        if abs(ref[ind + 1] - val) >= abs(ref[ind] - val):
-            new_ind = ind + 1
-        else:
-            new_ind = ind
+        # if abs(ref[ind + 1] - val) <= abs(ref[ind] - val):
+        #     new_ind = ind + 1
+        # else:
+        #     new_ind = ind
 
-        while new_ind < len(ref) and abs(ref[new_ind + 1] - val) >= abs(ref[new_ind] - val):
+        new_ind = ind
+
+        while new_ind < len(ref) - 1 and abs(ref[new_ind + 1] - val) <= abs(ref[new_ind] - val):
             new_ind += 1
 
-        if new_ind == ind + 1:
-            return
-
-        if new_ind > ind + self.MAX_TRANSITION_LENGTH:
-            self.error(self.MAX_TRANSITION_LENGTH_EXCEEDED)
-        else:
-            self.indexes[id][orientation] = new_ind
-            return
+        if new_ind > ind:
+            if new_ind > ind + self.MAX_TRANSITION_LENGTH:
+                self.error(self.MAX_TRANSITION_LENGTH_EXCEEDED)
+            else:
+                self.indexes[id][orientation] = new_ind
+                return
 
         if ind == 0:
             return
@@ -83,7 +96,7 @@ class Analyser:
     def init_params(self):
         # Указатели на текущий элемент в эталоне
         self.indexes = []
-        for i in range(len(self.ORIENTATIONS)):
+        for i in range(self.sensor_count):
             index = {}
             for orientation in self.ORIENTATIONS:
                 index[orientation] = 0
@@ -95,23 +108,47 @@ class Analyser:
         self.init_data = {}
 
     def check_indexes(self):
-        min_ind = len(self.references[0][self.ORIENTATIONS[0]])
-        max_ind = 0
+        min_perc = len(self.references[0][self.ORIENTATIONS[0]])
+        max_perc = 0
 
-        for obj in self.indexes:
-            for ind in obj:
-                min_ind = min(min_ind, ind)
-                max_ind = min(max_ind, ind)
+        for i in range(len(self.indexes)):
+            for orientation in self.indexes[i]:
+                if not self.references[i][orientation]['is_const']:
+                    perc = self.indexes[i][orientation] / len(self.references[i][orientation]['values'])
+                    min_perc = min(min_perc, perc)
+                    max_perc = max(max_perc, perc)
 
-        return max_ind - min_ind < self.MAX_INDEXES_DELTA
+        return max_perc - min_perc < self.MAX_INDEXES_DELTA
 
     def error(self, err):
         # TODO: Добавить обработку ошибок
 
+        if err == self.INCORRECT_DIRECTION:
+            print ('Incorrect direction')
+        elif err == self.MAX_TRANSITION_LENGTH_EXCEEDED:
+            print ('Max transition length exceeded')
+        elif err == self.MAX_INDEXES_DELTA_EXCEEDED:
+            print ('Max indexes delta exceeded')
+
         self.init_params()
 
     def is_init_state(self):
-        pass
+        for id in range(self.sensor_count):
+            if id in self.init_data:
+                for orientation in self.ORIENTATIONS:
+                    if self.references[id][orientation]['is_const']:
+                        l = self.references[id][orientation]['min']
+                        r = self.references[id][orientation]['max']
+                    else:
+                        l = min(self.references[id][orientation]['values'][0], self.references[id][orientation]['values'][1])
+                        r = max(self.references[id][orientation]['values'][0], self.references[id][orientation]['values'][1])
+
+                        if not l <= self.init_data[id][orientation] <= r:
+                            return False
+            else:
+                return False
+
+        return True
 
     def process_init_state(self, data):
         id = data['id']
@@ -119,6 +156,10 @@ class Analyser:
         self.init_data[id] = data
         if self.is_init_state():
             self.state = self.DOING_EXERCISE
+            print ("Init state")
+
+    def check_const(self, min, max, val):
+        return min <= val <= max
 
 
 class Reader:
@@ -138,7 +179,7 @@ class Reader:
         while True:
             cur_data = self.read()
             self.update_cache(cur_data)
-            id = cur_data['id'] - 1
+            id = cur_data['id']
             #print(id)  #          if self.HAVE_ENOUGH_DATA[id] == True:
             x = int(sum(self.cache[id]['x']) / self.SMOOTH_INDEX)
             y = int(sum(self.cache[id]['y']) / self.SMOOTH_INDEX)
@@ -149,8 +190,7 @@ class Reader:
             return rd
 
     def update_cache(self, data):
-        id = data['id'] - 1
-        print(id)
+        id = data['id']
         lenx = len(self.cache[id]['x'])
         if lenx == self.SMOOTH_INDEX:
             self.cache[id]['x'] = self.cache[id]['x'][1:self.SMOOTH_INDEX]
@@ -217,28 +257,6 @@ class Reader:
 
         return id, x, y, z, hsh
 
-    def read_f(self, ser):
-        i = 0
-        while i < 8:
-            ch = ser.read()
-            if ord(ch) == 0xFF:
-                i += 1
-                if i == 8:
-                    break
-            else:
-                i = 0
-
-    def read_num(self, ser):
-        i = 0
-        num = ''
-        while i < 8:
-            ch = ser.read()
-            ch = ord(ch)
-            num += chr(ch)
-            # print(ch, ' ')
-            i += 1
-        return num
-
     def test2(self):
         ser = serial.Serial('COM4')
         i = 0
@@ -283,7 +301,7 @@ class Reader:
         if len(symbols):
             id, x, y, z, hsh = self.transform(symbols)
 
-        rd = {'id': id, 'x': x, 'y': y, 'z': z}
+        rd = {'id': id - 1, 'x': x, 'y': y, 'z': z}
 
         return rd
 
@@ -291,8 +309,5 @@ class Reader:
         self.ser.close()
 
 
-
-#analyser = Analyser('references.json')
-rdr = Reader('COM4')
-while True:
-    print(rdr.process_read())
+# analyser = Analyser('references.json', 4)
+# analyser.data_listen()
