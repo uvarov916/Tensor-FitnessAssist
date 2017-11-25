@@ -1,5 +1,5 @@
 import serial
-import codecs
+import bitstring
 
 class Analyser:
     def data_listen(self):
@@ -54,18 +54,55 @@ class Analyser:
                     symbols = []
                     return result
 
+    def test2(self):
+        ser = serial.Serial('COM4')
+        i = 0
+        flag = False
+        while i < 8:
+            symbol = ser.read()
+            if ord(symbol) == 0xff:
+                i += 1
+            else:
+                i = 0
+            if i == 8:
+                symbols = []
+                j = 0
+                while j < 8:
+                    symbol = ser.read()
+                    if ord(symbol) != 0xff:
+                        symbols.append(ord(symbol))
+                        j += 1
+                        if j == 8:
+                            return symbols
+                    else:
+                        j = 0
+                        i = 0
+                        symbols = []
+                        break
+
+
+
+
+
+
+
+
 
     def transform(self, num):
-        id = (num[0])
-        x = ((num[1]) << 8) | (num[2])
-        y = ((num[3]) << 8) | (num[4])
-        z = ((num[5]) << 8) | (num[6])
-        hsh =num[7]
-
-        return id, x, y, z, hsh
+        # id = (num[0])
+        id = bitstring.Bits(uint=num[0], length=16)
+        # x = ((num[1]) << 8) | (num[2])
+        x = bitstring.Bits(uint=((num[1]) << 8) | (num[2]), length=16)
+        # y = ((num[3]) << 8) | (num[4])
+        y = bitstring.Bits(uint=((num[3]) << 8) | (num[4]), length=16)
+        # z = ((num[5]) << 8) | (num[6])
+        z = bitstring.Bits(uint=((num[5]) << 8) | (num[6]), length=16)
+        # hsh =num[7]
+        hsh = 0x0
+        return id.unpack('int')[0], x.unpack('int')[0], y.unpack('int')[0], z.unpack('int')[0], hsh
 
     def read(self):
-        symbols = self.test()
+        symbols = self.test2()
         id, x, y, z, hsh = self.transform(symbols)
 
         rd = {'id': id, 'x': x, 'y': y, 'z': z}
@@ -76,5 +113,5 @@ class Analyser:
 a = Analyser()
 
 while True:
-    (a.read())
+    print(a.read())
 
