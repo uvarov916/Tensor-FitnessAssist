@@ -1,11 +1,6 @@
-<<<<<<< HEAD
-import serial
 import bitstring
-=======
 import json
 import serial
-import codecs
->>>>>>> origin/master
 
 class Analyser:
     # Consts
@@ -241,11 +236,11 @@ class Reader:
         # id = (num[0])
         id = bitstring.Bits(uint=num[0], length=16)
         # x = ((num[1]) << 8) | (num[2])
-        x = bitstring.Bits(uint=((num[1]) << 8) | (num[2]), length=16)
+        x = bitstring.Bits(uint=((num[2]) << 8) | (num[1]), length=16)
         # y = ((num[3]) << 8) | (num[4])
-        y = bitstring.Bits(uint=((num[3]) << 8) | (num[4]), length=16)
+        y = bitstring.Bits(uint=((num[4]) << 8) | (num[3]), length=16)
         # z = ((num[5]) << 8) | (num[6])
-        z = bitstring.Bits(uint=((num[5]) << 8) | (num[6]), length=16)
+        z = bitstring.Bits(uint=((num[6]) << 8) | (num[5]), length=16)
         # hsh =num[7]
         hsh = 0x0
         return id.unpack('int')[0], x.unpack('int')[0], y.unpack('int')[0], z.unpack('int')[0], hsh
@@ -258,5 +253,8 @@ class Reader:
         rd = {'id': id, 'x': x, 'y': y, 'z': z}
 
         return rd
+
+    def close(self):
+        self.ser.close()
 
 # analyser = Analyser('references.json')

@@ -1,6 +1,7 @@
 import keyboard
 import json
 from analyser import Reader
+import os
 
 
 class ReferenceGenerator:
@@ -27,6 +28,7 @@ class ReferenceGenerator:
 
     def make_ref(self):
         print ('Start')
+        clear = lambda: os.system('cls')
         while True:
             try:
                 if keyboard.is_pressed('enter'):  # if key 'q' is pressed
@@ -36,6 +38,10 @@ class ReferenceGenerator:
 
             data = self.reader.read()
 
+            print (data)
+
+            clear()
+
             self.write_data(data)
 
         for i in range(self.sensor_count):
@@ -43,6 +49,8 @@ class ReferenceGenerator:
                 self.detect_const(i, orientation)
 
         json.dump({'references': list(self.ref)}, open('references.json', 'w'))
+
+        self.reader.close()
 
         print('Stop')
 
