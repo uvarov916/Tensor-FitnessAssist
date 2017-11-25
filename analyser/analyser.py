@@ -18,25 +18,31 @@ class Analyser:
     WAITING_INIT_STATE = 1
     DOING_EXERCISE = 2
 
-    def __init__(self, file_name, sensor_count):
+    def __init__(self, file_name, exercise_info, rdr):
         data = json.load(open(file_name))
-
+        self.mainPlot = data["main"]
+        self.stateCount = exercise_info["stateCount"]
+        self.sensorCount = 4
         # Массивы с эталонами координат
         self.references = data['references']
-        self.reader = Reader('COM12')
-        self.sensor_count = sensor_count
+        print(data)
+        self.reader = rdr
 
-    def data_listen(self):
-        self.init_params()
-        print ('Start')
+    def process_data(self):
+        data = self.reader.read()
+        if self.state == self.WAITING_INIT_STATE:
+            self.process_init_state(data)
+        elif self.state == self:
+            self.step(data)
+            
+        return self.calc_state()
 
-        while True:
-            data = self.reader.process_read()
-
-            if self.state == self.WAITING_INIT_STATE:
-                self.process_init_state(data)
-            elif self.state == self.DOING_EXERCISE:
-                self.step(data)
+    def calc_state(self):
+        id = self.main["id"]
+        orient = self.main["orientation"]
+        arrayLen = len(self.references[id][orient])
+        idx = self.indexes[id][orient]
+        return int(idx / float(arrayLen / self.stateCount))
 
     def step(self, data):
         id = data['id']
@@ -309,5 +315,11 @@ class Reader:
         self.ser.close()
 
 
+
 # analyser = Analyser('references.json', 4)
 # analyser.data_listen()
+
+#analyser = Analyser('references.json')
+# rdr = Reader('COM4')
+# while True:
+#     print(rdr.process_read())
