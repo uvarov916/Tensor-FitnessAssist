@@ -11,6 +11,7 @@ class ReferenceGenerator:
     MAX_VAL = 32000
     MAX_CONST_ERROR = 4000
     MIN_STEP = 2000
+    CONST_STEP = 3000
 
     def __init__(self, sensor_count):
         self.ref = []
@@ -86,12 +87,16 @@ class ReferenceGenerator:
 
         if (max_val - min_val <= self.MAX_CONST_ERROR):
             self.ref[id][orientation]['is_const'] = True
+        else:
+            values = self.ref[id][orientation]['values']
 
-        # self.ref[id][orientation]['min'] = min_val
-        # self.ref[id][orientation]['max'] = max_val
+            if values[0] > values[1]:
+                self.ref[id][orientation]['values'][0] += self.MIN_STEP
+            else:
+                self.ref[id][orientation]['values'][0] -= self.MIN_STEP
 
-        self.ref[id][orientation]['min'] = -32000
-        self.ref[id][orientation]['max'] = 32000
+        self.ref[id][orientation]['min'] = min_val - self.CONST_STEP
+        self.ref[id][orientation]['max'] = max_val + self.CONST_STEP
 
 
 

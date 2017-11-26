@@ -21,12 +21,15 @@ class Analyser:
     def __init__(self, file_name, exercise_info, rdr):
         data = json.load(open(file_name))
         self.mainPlot = data["main"]
-        self.stateCount = exercise_info["stateCount"]
-        self.sensorCount = 4
+        self.stateCount = 10
+        self.sensor_count = 4
         # Массивы с эталонами координат
         self.references = data['references']
-        print(data)
         self.reader = rdr
+        # self.reader = Reader('COM12')
+        # self.sensor_count = sensor_count
+        # self.ind = 0
+        # self.x = 0
 
     def process_data(self): # Analyze state
         self.lastError = None
@@ -41,8 +44,8 @@ class Analyser:
         return {"stateRes": stateRes, "error": self.lastError != None}
 
     def calc_state(self):
-        id = self.main["id"]
-        orient = self.main["orientation"]
+        id = self.mainPlot["id"]
+        orient = self.mainPlot["orientation"]
         arrayLen = len(self.references[id][orient])
         idx = self.indexes[id][orient]
         return int(idx / float(arrayLen / self.stateCount))
@@ -60,19 +63,19 @@ class Analyser:
                 print ('const limit error', item['min'], item['max'], data[orientation])
                 self.error(self.CONSTANT_LIMIT_EXCEEDED)
 
-        print (self.indexes[2]['x'])
-
-        if data['id'] == 2:
-            print ('coord', data['x'])
+        # if data['id'] == 3:
+        #     print ('coord', data['x'])
 
     def change_index(self, id, orientation, val):
         ind = self.indexes[id][orientation]
         ref = self.references[id][orientation]['values']
 
+        if self.references[id][orientation]['is_const']:
+            return
+
         # Если дошли до последнего элемента, прекращаем обработку
         if ind >= len(ref) - 1:
-            if not self.references[id][orientation]['is_const']:
-                self.init_params()
+            self.init_params()
             return
 
         # if abs(ref[ind + 1] - val) <= abs(ref[ind] - val):
@@ -130,7 +133,6 @@ class Analyser:
         return max_perc - min_perc < self.MAX_INDEXES_DELTA
 
     def error(self, err):
-        # TODO: Добавить обработку ошибок
 
         if err == self.INCORRECT_DIRECTION:
             print ('Incorrect direction')
