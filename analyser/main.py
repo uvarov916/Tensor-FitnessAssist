@@ -43,28 +43,33 @@ def disconnect():
 def exercise(data):
     print(data)
     print("Started " + data["name"])
-    prevRes = { "stateRes": -4500}
+    prevRes = { "progress": -4500}
     global exercise_in_progress
     exercise_in_progress = True # Start exercise processing
 
     analyser = Analyser('references_' + data["name"] + '.json', data, rdr) # Create analyser for data["name"] exercise
-    # res = analyser.process_data()
-    res = { "stateRes": 1, "error": False }
-    test_index = 0
+    res = analyser.process_data()
+    # res = { "stateRes": -1, "error": False }
+    # test_index = 0
     while exercise_in_progress:
-        print("While inner")
+        # print("While inner")
         if res["error"]: # Check error
             message = { "name": "error" }
         else:
-            message = { "name": data["name"], "progress": res }         
-        if(res["stateRes"] != prevRes["stateRes"]): 
+            message = { "name": data["name"], "progress": res["progress"] }       
+        # print(res)  
+        # print(prevRes)
+        if(res["progress"] != prevRes["progress"]): 
             prevRes = copy.deepcopy(res)
-            print(message)
+            # print(message)
             socketio.emit('exercise', message)
-            res = { "stateRes": test_array[test_index], "error": test_array[test_index] == -1 }
-            test_index = (test_index + 1) % len(test_array)
-            # res = analyzer.process_data()
-        time.sleep(2)
+            # test_index = (test_index + 1) % len(test_array)
+            # res = { "stateRes": test_array[test_index], "error": test_array[test_index] == -1 }
+            # print(res)
+            # print(prevRes)
+        res = analyser.process_data()
+        print(res)
+        time.sleep(0.01)
 
 @socketio.on('finish_exercise')
 def finishEx():
