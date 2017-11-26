@@ -28,14 +28,17 @@ class Analyser:
         print(data)
         self.reader = rdr
 
-    def process_data(self):
+    def process_data(self): # Analyze state
+        self.lastError = None
         data = self.reader.read()
         if self.state == self.WAITING_INIT_STATE:
             self.process_init_state(data)
         elif self.state == self:
             self.step(data)
-            
-        return self.calc_state()
+        stateRes = self.calc_state()
+        if stateRes == self.stateCount:
+            self.init_params()
+        return {"stateRes": stateRes, "error": self.lastError != None}
 
     def calc_state(self):
         id = self.main["id"]
