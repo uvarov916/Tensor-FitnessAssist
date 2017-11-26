@@ -31,6 +31,9 @@ class Analyser:
         # self.ind = 0
         # self.x = 0
 
+    def recalcres(self, res):
+        return 10 - res if res > 5 else res
+
     def process_data(self): # Analyze state
         self.lastError = None
         data = self.reader.read()
@@ -41,7 +44,7 @@ class Analyser:
         stateRes = self.calc_state()
         if stateRes == self.stateCount:
             self.init_params()
-        return {"stateRes": stateRes, "error": self.lastError != None}
+        return {"stateRes": self.recalcres(stateRes), "error": self.lastError != None}
 
     def calc_state(self):
         id = self.mainPlot["id"]
