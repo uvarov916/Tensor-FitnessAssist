@@ -1,18 +1,17 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
 import Main from './Main';
 import TrainingFinish from './TrainingFinish';
-import GetTraining from './GetTraining';
+import TrainingPage from './TrainingPage';
 import io from "socket.io-client";
 
 class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            currentTraining: '',
-            dataActiveTraining: null
-
+            currentPage: 1,
+            dataActiveTraining: null,
+            socket:null
         };
         this.selectTrainingHandler = this.selectTrainingHandler.bind(this);
         this.finishTrainingHandler = this.finishTrainingHandler.bind(this);
@@ -21,54 +20,53 @@ class App extends Component {
     }
 
     selectTrainingHandler(activeTraining) {
-        this.setState({currentTraining :'2'});
-     this.setState({dataActiveTraining :activeTraining});
-
+        this.setState({
+           currentPage: 2,
+           dataActiveTraining: activeTraining
+        });
     }
 
     processTrainingHandler(){
-        this.setState({currentTraining :'3'});
+        this.setState({currentPage: 3});
     }
     finishTrainingHandler(){
-        this.setState({currentTraining :'1'});
+        this.setState({currentPage: 1});
     }
 
     render() {
-      if(this.state.currentTraining === "")
-          return (
-              <Main selectTrainingHandler={this.selectTrainingHandler}/>
-            );
-
-      else if(this.state.currentTraining === '1')
-      {
+       if(this.state.currentPage === 1) {
           return(
-          <Main selectTrainingHandler={this.selectTrainingHandler}/>
+            <Main selectTrainingHandler={this.selectTrainingHandler}/>
           );
       }
-       else if(this.state.currentTraining === '2')
-        {
+       else if (this.state.currentPage === 2) {
             return(
-                <GetTraining dataActiveTraining={this.state.dataActiveTraining} socketData={this.state.socketData} processTrainingHandler={this.processTrainingHandler}/>
+                <TrainingPage socketIO={this.state.socket} dataActiveTraining={this.state.dataActiveTraining} socketData={this.state.socketData} processTrainingHandler={this.processTrainingHandler}/>
             );
         }
 
-      else if(this.state.currentTraining === '3')
-      {
+      else if (this.state.currentPage === 3) {
           return(
                <TrainingFinish finishTrainingHandler={this.finishTrainingHandler}/>
               );
       }
-  }
+    }
 
-    componentDidMount(){
-        var socket = io.connect('http://10.76.56.86:8000');
-        socket.on('connect', function (data) {
-            console.log('connect');
+    componentDidMount() {
+        this.state.socket = io.connect('http://10.76.56.86:8000');
+
+        this.state.socket.on('connect', function (data) {
+            console.log('Socket connected');
         });
-        socket.on('exercise', function(data){
-            console.log(data);
+
+        this.state.socket.on('exercise', function(data) {
+            console.log('Exercise event:', data);
             this.setState({socketData:data});
         }.bind(this));
+
+        this.state.socket.on('disconnect', function(data) {
+           console.log('Socket disconnected');
+        });
     }
 }
 

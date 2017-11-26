@@ -4,134 +4,137 @@ import './App.css';
 
 class Main extends Component {
 
-
     constructor(props) {
         super(props);
-        let trainings = [
+
+        this.trainings = [
             {
-                name: "Trenirovka 1",
+                name: "Программист",
                 exercises: [
                     {
-                        exercise: 'bizeps',
-                        count: 2
+                        id: 'biceps',
+                        count: 1
                     },
                     {
-                        exercise: 'pushup',
+                        id: 'pushup',
+                        count: 1
+                    },
+                    {
+                        id: 'squat',
+                        count: 1
+                    }
+                ]
+            },
+            {
+                name: "Девушка программиста",
+                exercises: [
+                    {
+                        id: 'biceps',
+                        count: 5
+                    },
+                    {
+                        id: 'pushup',
                         count: 3
                     },
                     {
-                        exercise: 'squat',
+                        id: 'squat',
                         count: 10
                     }
                 ]
             },
             {
-                name: "Trenirovka 2",
+                name: "Качок",
                 exercises: [
                     {
-                        exercise: 'bizeps',
+                        id: 'biceps',
+                        count: 7
+                    },
+                    {
+                        id: 'pushup',
+                        count: 8
+                    },
+                    {
+                        id: 'squat',
                         count: 15
-                    },
-                    {
-                        exercise: 'pushup',
-                        count: 5
-                    },
-                    {
-                        exercise: 'squat',
-                        count: 10
-                    }
-                ]
-            },
-            {
-                name: "Trenirovka 3",
-                exercises: [
-                    {
-                        exercise: 'bizeps',
-                        count: 15
-                    },
-                    {
-                        exercise: 'pushup',
-                        count: 5
-                    },
-                    {
-                        exercise: 'squat',
-                        count: 10
                     }
                 ]
             }
         ];
+        this.pageTitle = "Выберите тренировку";
+
         this.state = {
-            trainings:trainings,
-            pageTitle:"Выберите тренировку",
-            activeTraining:{
-                name:""
+            activeTraining: {
+                name: "",
+                exercises: []
             },
-            socketData:""
+            socketData: {
+                name: 'Сокет не подключен',
+                progress: 0
+            }
         };
+
         this.chooseTrainingHandler = this.chooseTrainingHandler.bind(this);
-        this.putStartHandler = this.putStartHandler.bind(this);
+        this.startTrainingHandler = this.startTrainingHandler.bind(this);
     }
+
     render() {
         return (
-            <div >
-            <h1> {this.state.pageTitle} </h1>
-        <Trenirovki trainings = {this.state.trainings} activeTraining={this.state.activeTraining} handler={this.chooseTrainingHandler}/>
-        <StartClick handler={this.putStartHandler}/>
-        </div>
-    );
+           <div>
+                <h1>{this.pageTitle}</h1>
+                <Trenirovki trainings = {this.trainings} activeTraining={this.state.activeTraining} chooseTrainingHandler={this.chooseTrainingHandler}/>
+                <StartButton startTrainingHandler={this.startTrainingHandler}/>
+            </div>
+        );
     }
 
     chooseTrainingHandler(e, nameActiveTraining) {
         console.log('in handler ' + nameActiveTraining);
         this.setState({activeTraining:nameActiveTraining});
     }
-
-    putStartHandler(e) {
-        console.log('putStartHandler');
+    startTrainingHandler(e) {
+        console.log('startTrainingHandler');
         this.props.selectTrainingHandler(this.state.activeTraining);
+    }
 }
-}
+
 function Trenirovka(props)
 {
     const exercises = props.training.exercises;
     const listExercises = exercises.map((exercise)=>
-        <div className="exercises">
-    <p>{exercise.exercise}</p>
-<p>{exercise.count}</p>
-</div>
-);
+        <div className="exercise">
+            <p>{exercise.exercise}</p>
+             <p>{exercise.count}</p>
+        </div>
+    );
 
 
     var active = '';
-    if(props.activeTraining.name === props.training.name)
-    {
+    if(props.activeTraining.name === props.training.name) {
         active="active";
     }
 
     return (
-        <div className={'trenirovka ' + active} onClick={(e) => props.handler(e, props.training)}>
-<h2>{props.training.name}</h2>
-<div>{listExercises}</div>
-</div>
-);
+        <div className={'trenirovka ' + active} onClick={(e) => props.chooseTrainingHandler(e, props.training)}>
+            <h2>{props.training.name}</h2>
+            <div>{listExercises}</div>
+        </div>
+    );
 
 }
 
-function  Trenirovki(props)
-{
-    const trainings = props.trainings;
-    const listTrainings = trainings.map((training)=>
-        <Trenirovka handler={props.handler} activeTraining={props.activeTraining} training = {training}/>
-);
+function Trenirovki(props){
+    const listTrainings = props.trainings.map((training)=>
+        <div><Trenirovka chooseTrainingHandler={props.chooseTrainingHandler} activeTraining={props.activeTraining} training = {training}/></div>
+    );
     return(
         <div className="trenirovki">{listTrainings}</div>
-);
+    );
 }
 
-function StartClick(props) {
+function StartButton(props) {
 
 	return(
-        <div className="start" onClick={(e) => props.handler(e)}>Начать тренировку</div>
+        <div className="start" onClick={(e) => props.startTrainingHandler(e)}>Начать тренировку</div>
 	);
 }
 

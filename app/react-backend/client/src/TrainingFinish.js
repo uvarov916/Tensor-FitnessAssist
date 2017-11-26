@@ -1,88 +1,80 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
-import io from "socket.io-client";
-
 
 class TrainingFinish extends Component {
 
     constructor(props) {
         super(props);
-        var results=
-        [
-                {
-                    name: "currentName",
-                    time: 15
-                },
-                {
-                name: "otherNames",
-                time: 10
-                },
-            ];
+
+        this.pageTitle = 'Тренировка завершена';
+
+        var results= [
+           {
+               name: "Дмитрий",
+               time: 1000003
+           },
+           {
+               name: "Никитос",
+               time: 1
+           }
+        ];
 
 
         let personInfo = {
-            name: "BlaBla",
-            time: 25,
+            name: "Сергей",
+            time: 40,
             current: true
         };
 
         results.push(personInfo);
 
-        function compareObjects (a, b) {
-            if (a.time < b.time) return 1;
-            if (a.time > b.time) return -1;
-            return 0;
-        };
-        results.sort(compareObjects);
+        results.sort((a, b) => {
+           if (a.time < b.time) return 1;
+           if (a.time > b.time) return -1;
+           return 0;
+        });
 
         this.state = {
-            pageTitle:"Тренировка завершена",
-            name:"currentName",
-            results:results,
-            personInfo:personInfo
+            results: results,
+            personInfo: personInfo
         };
-        this.repeatHandler = this.repeatHandler.bind(this);
+
+        this.finishTrainingHandler = this.finishTrainingHandler.bind(this);
     }
+
     render() {
         return (
             <div >
-                <h1>{this.state.pageTitle} </h1>
-                <div> {this.state.personInfo.name + ','}</div>
+                <h1>{this.pageTitle}</h1>
+                <div>{this.state.personInfo.name + ','}</div>
                 <div>Вы закончили тренировку за {this.state.personInfo.time} секунд</div>
                 <Results results = {this.state.results}/>
-                <RepeatClick handler={this.repeatHandler}/>
+                <RepeatButton finishTrainingHandler={this.finishTrainingHandler}/>
             </div>
 
         );
     }
 
-    repeatHandler(e) {
+    finishTrainingHandler(e) {
         this.props.finishTrainingHandler();
     }
 }
 
 function Results(props) {
-    const results = props.results;
-    const listResults = results.map((result) =>
+    const listResults = props.results.map((result) =>
         <div className={'resultsClass ' + (result.current ? 'current' : '')}>
-            <tr>{result.name}</tr>
-            <tr>{result.time}</tr>
+            <div>{result.name}</div>
+            <div>{result.time}</div>
         </div>
     );
 
     return (
-        <div>
-            <h2>{props.results.name}</h2>
-            <div>{listResults}</div>
-        </div>
+       <div>{listResults}</div>
     )
 }
 
-function RepeatClick(props) {
-
+function RepeatButton(props) {
     return(
-        <div className="repeat" onClick={(e) => props.handler(e)}>Начать тренировку заново</div>
+        <div className="repeat" onClick={(e) => props.finishTrainingHandler(e)}>Начать тренировку заново</div>
     );
 }
 
