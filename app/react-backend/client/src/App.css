@@ -1,31 +1,3 @@
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 80px;
-}
-
-.App-header {
-  background-color: #222;
-  height: 150px;
-  padding: 20px;
-  color: white;
-}
-
-.App-title {
-  font-size: 1.5em;
-}
-
-.App-intro {
-  font-size: large;
-}
-
-@keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
 
 .trenirovka {
   display: inline-block;
@@ -78,3 +50,187 @@ border: solid 1px black;
   background: red;
 }
 
+body {
+    background: #19252F;
+    font-family: sans-serif;
+    text-align: center;
+}
+
+.main {
+    color: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.orange {
+    color: #F6A623;
+}
+
+.main h1 {
+    color: white;
+    font-weight: 400;
+    margin-top: 8rem;
+    font-size: 3rem;
+}
+
+.workouts {
+    color: black;
+    margin: 0 auto;
+    max-width: 1000px;
+}
+
+.workouts-workout {
+    border-radius: 4px;
+    padding: 1rem 2rem;
+    text-align: left;
+    width: 12rem;
+    display: inline-block;
+    margin: 1rem;
+    background: #FFFBF3;
+    border: 4px solid #FFFBF3;
+    cursor: pointer;
+}
+
+.workouts-workout:hover, .workouts-workout.active {
+    border-color: #F5A623;
+}
+
+.workouts-workout.selected {
+    background: #75541E;
+	border-color: #F5A623;
+    color: white;
+}
+
+.select-workout-button {
+    display: inline-block;
+    margin: 0 auto;
+    text-transform: uppercase;
+    padding: 1rem 1.5rem;
+    background: #6FD223;
+    border: 4px solid #6FD223;
+    border-radius: 4px;
+    margin-top: 2rem;
+    cursor: pointer;
+}
+
+.select-workout-button:hover {
+    border-color: #C8FF9E;
+}
+
+.connection-status {
+    position: absolute;
+    color: white;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(256,0,0,0.7);
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+.connection-status.connected {
+	background: rgba(0,256,0,0.7);
+}
+
+.connection-status.connected {
+    color: #6FD223;
+}
+
+.connection-status:before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background-color: white;
+    border-radius: 5px;
+}
+
+.page {
+	margin: 2rem 2rem 0;
+	border-radius: 4px;
+	background: white;
+}
+
+.trainings-page {
+	overflow: hidden;
+}
+
+.workout-right, .workout-left {
+	float: left;
+	display: inline-block;
+}
+
+.workout-left {
+	width: 60%;
+}
+
+.workout-right {
+	width: 40%;
+	text-align: left;
+}
+
+.workout-info {
+	overflow: hidden;
+	padding: 2rem 0;
+}
+
+.exercise-name {
+	margin-top: 2rem;
+	font-size: 36px;
+	margin-bottom: .5rem;
+}
+
+.exercise-count {
+	margin-top: 0;
+	font-size: 48px;
+}
+
+.exercise-count .current {
+	font-size: 72px;
+}
+
+.react-motivation {
+	background: #e8e8ff;
+    width: 80%;
+    padding: .05rem .7rem;
+    border: 1px solid blue;
+    border-radius: 4px;
+    overflow: hidden;
+	margin-top: 1rem;
+}
+
+.telegram-link {
+	color: blue;
+	font-weight: bold;
+	font-size: 22px;
+}
+
+.telegram-from {
+	margin-bottom: 0;
+    font-size: 18px;
+}
+
+.telegram-message {
+	font-size: 32px;
+    margin-top: 1rem;
+}
+
+.finish-workout-button {
+	display: inline-block;
+	margin-right: 1rem;
+	cursor: pointer;
+    color: blue;
+    text-decoration: underline;
+}
+
+.congrat-message {
+	font-size: 36px;
+    padding: 14rem 3rem;
+}
+
+.back-to-home {
+	text-align: center;
+	padding-top: 1rem;
+	padding-bottom: 1rem;
+	cursor: pointer;
+	text-decoration: underline;
+	color: blue;
+}
