@@ -21,12 +21,14 @@ class Analyser:
     def __init__(self, file_name, exercise_info, rdr):
         data = json.load(open(file_name))
         self.mainPlot = data["main"]
-        self.stateCount = 10
+        self.stateCount = 9
         self.sensor_count = 4
         # Массивы с эталонами координат
         self.references = data['references']
         self.reader = rdr
         self.init_params()
+        if file_name == 'references_squat.json':
+            self.stateCount = 5
         # self.reader = Reader('COM12')
         # self.sensor_count = sensor_count
         # self.ind = 0
@@ -42,25 +44,33 @@ class Analyser:
         data = self.reader.read()
         if self.state == self.WAITING_INIT_STATE:
             self.process_init_state(data)
-        elif self.state == self:
+        elif self.state == self.DOING_EXERCISE:
             self.step(data)
         stateRes = self.calc_state()
+        # print (stateRes)
         if stateRes == self.stateCount:
             self.init_params()
-        return {"progress": self.recalcres(stateRes), "error": self.lastError != None}
+        return {"progress": self.recalcres(stateRes), "error": self.lastError != None, 'is_finished': stateRes == self.stateCount}
 
     def calc_state(self):
         id = self.mainPlot["id"]
         orient = self.mainPlot["orientation"]
-        arrayLen = len(self.references[id][orient])
+        arrayLen = len(self.references[id][orient]['values'])
         idx = self.indexes[id][orient]
-        return int(idx / float(arrayLen / self.stateCount))
+        res = int(idx * self.stateCount / arrayLen) + 1
+        # print(res, idx, arrayLen, id)
+        # print(self.references[id][orient])
+        return res
 
     def step(self, data):
         id = data['id']
 
         for orientation in self.ORIENTATIONS:
-            item = self.references[id][orientation]
+            try:
+                item = self.references[id][orientation]
+            except:
+                print ('piada')
+                print (id, orientation)
             self.change_index(id, orientation, data[orientation])
             if not self.check_indexes():
                 self.error(self.MAX_INDEXES_DELTA_EXCEEDED)
@@ -73,8 +83,11 @@ class Analyser:
         #     print ('coord', data['x'])
 
     def change_index(self, id, orientation, val):
-        ind = self.indexes[id][orientation]
-        ref = self.references[id][orientation]['values']
+        try:
+            ind = self.indexes[id][orientation]
+            ref = self.references[id][orientation]['values']
+        except:
+            return
 
         if self.references[id][orientation]['is_const']:
             return
@@ -106,6 +119,7 @@ class Analyser:
 
         if ref[ind] > ref[ind - 1]:
             if val <= ref[ind - 1]:
+                print(ref[ind], ref[ind - 1], val)
                 self.error(self.INCORRECT_DIRECTION)
         else:
             if val >= ref[ind - 1]:
@@ -163,6 +177,9 @@ class Analyser:
                         r = max(self.references[id][orientation]['values'][0], self.references[id][orientation]['values'][1])
 
                         if not l <= self.init_data[id][orientation] <= r:
+                            # print ('Pizdetc')
+                            # print (l, self.init_data[id][orientation], r)
+                            # print (id, orientation)
                             return False
             else:
                 return False

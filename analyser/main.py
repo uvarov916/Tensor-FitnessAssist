@@ -19,7 +19,8 @@ print("Socket started.")
 rdr = Reader('COM9')
 print("Serial opened.")
 connected = False
-exercised_in_progress = False
+exercise_in_progress = False
+analyser = None
 
 @socketio.on('connect')
 def connect():
@@ -43,38 +44,20 @@ def disconnect():
 def exercise(data):
     print(data)
     print("Started " + data["name"])
-    prevRes = { "progress": -4500}
+    global exercise_data
+    exercise_data = data
     global exercise_in_progress
     exercise_in_progress = True # Start exercise processing
-
+    global analyser
     analyser = Analyser('references_' + data["name"] + '.json', data, rdr) # Create analyser for data["name"] exercise
-    res = analyser.process_data()
+    # analyser = Analyser('references.json', data, rdr)
     # res = { "stateRes": -1, "error": False }
     # test_index = 0
-    while exercise_in_progress:
-        # print("While inner")
-        if res["error"]: # Check error
-            message = { "name": "error" }
-        else:
-            message = { "name": data["name"], "progress": res["progress"] }       
-        # print(res)  
-        # print(prevRes)
-        if(res["progress"] != prevRes["progress"]): 
-            prevRes = copy.deepcopy(res)
-            # print(message)
-            socketio.emit('exercise', message)
-            # test_index = (test_index + 1) % len(test_array)
-            # res = { "stateRes": test_array[test_index], "error": test_array[test_index] == -1 }
-            # print(res)
-            # print(prevRes)
-        res = analyser.process_data()
-        print(res)
-        time.sleep(0.01)
 
 @socketio.on('finish_exercise')
 def finishEx():
     # start analyzer
-    print("Finished " + data["name"])
+    print("Finished.")
     exercise_in_progress = False
 
 class Server(threading.Thread):
@@ -83,24 +66,31 @@ class Server(threading.Thread):
         self.threadID = thread_id
 
     def run(self):
-        prevRes = None
-        analyser = Analyser(data["name"] + '.json', data, rdr) # Create analyser for data["name"] exercise
-        # res = analyser.process_data()
-        res = { "stateRes": -1, "error": true }
-        test_index = 0
-        while exercised_in_progress:
-            if res["error"] is not None: # Check error
-                message = { "name": "error" }
-            else:
-                message = { "name": data["name"], "progress": res }
+        print("Start server")
+        prevRes = { "progress": -4500}
+        global exercise_in_progress 
+        while True:
+            if exercise_in_progress:
+                # print("While inner")
+                res = analyser.process_data()
+                # print(res)
+                if res["error"]: # Check error
+                    message = { "name": "error"}
+                else:
+                    message = { "name": exercise_data["name"], "progress": res["progress"] , "finalState": res['is_finished']}
 
-            if(res != prevRes): 
-                prevRes = res
-                socketio.emit('exercise', message)
-                res = { "stateRes": test_array[test_index], "error": test_array[test_index] == -1 }
-                test_index = (test_index + 1) % len(test_array)
-                # res = analyzer.process_data()
-                time.sleep(0.01)
+                # print(res)  
+                # print(prevRes)
+                if(res["progress"] != prevRes["progress"]): 
+                    prevRes = copy.deepcopy(res)
+                    # print(message)
+                    socketio.emit('exercise', message)
+                    # test_index = (test_index + 1) % len(test_array)
+                    # res = { "stateRes": test_array[test_index], "error": test_array[test_index] == -1 }
+                    # print(res)
+                    # print(prevRes)
+            time.sleep()
+                # print(res)
 
 
 # class Emitter(threading.Thread):
@@ -131,8 +121,8 @@ class Server(threading.Thread):
 #                 i += 1
 #             time.sleep(0.5)
 
-# server_thread = Server("Server-thread")
-# server_thread.start()
+server_thread = Server("Server-thread")
+server_thread.start()
 # server_thread = Emitter("Emitter-thread")
 # server_thread.start()
 # serial_thread = Server("Serial-read-thread")

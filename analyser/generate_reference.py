@@ -27,7 +27,7 @@ class ReferenceGenerator:
                 }
             self.ref.append(obj)
 
-        self.reader = Reader('COM12')
+        self.reader = Reader('COM9')
 
         print ('Connected')
 
